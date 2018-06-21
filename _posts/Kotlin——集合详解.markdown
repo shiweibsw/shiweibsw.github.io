@@ -1,0 +1,456 @@
+---
+layout:     post
+title:      "Kotlin——集合详解"
+subtitle:   "kotlin 学习笔记"
+date:       2018-06-21 14:45:00
+author:     "Knight_Davion"
+header-img: "img/2018-06/1.jpg"
+catalog: true
+tags:
+    - kotlin
+---
+
+集合是开发中非常常用的知识，比如操作各种数据集，各种算法，保存网络请求结果，作为Adapter数据集，如果你不会集合的知识，那么可能连显示一个基本的ListView列表都做不到，今天就来说说Kotlin中集合的知识。
+
+Kotlin 中的集合按照可变性分类可以分为：
+* **可变集合**
+* **不可变集合**
+
+按照类型分类可以分为：
+* **List集合**
+* **Map集合**
+* **Set集合**
+
+结合在一起就是说List，Map，Set又都可以分为可变和不可变两种。
+具体来说
+对于List
+* List ——声明不可变List集合
+* MutableList——声明可变List集合
+
+对于Map
+* Map——声明不可变Map集合
+* MutableMap——声明可变Map集合
+
+对于Set
+* Set——声明不可变Set集合
+* MutableSet——声明可变Set集合
+
+除此之外还有四个基本接口
+* Iterable ——所有集合的父类
+* MutableIterable —— 继承于Iterabl接口，支持遍历的同时可以执行删除操作
+* Collection —— 继承于Iterable接口，仅封装了对集合的只读方法
+* MutableCollection ——继承于Iterable,Collection，封装了添加或移除集合中元素的方法
+
+此外，记住List ，MutableList，Set，MutableSet 归根到底都是Collection的子类。
+
+###集合的创建
+Kotlin并没有提供创建集合的函数，但我们可以使用如下方法来创建相应的集合
+####List
+创建一个不可变的list
+>val mList = listOf<Int>(1, 2, 3)
+
+创建一个可变的list
+> val mList = mutableListOf<Int>(1, 2, 3)
+
+这里mutableListOf初始化了三个值，如果没有这三个值就相当于一个空集合，比如
+>      val mList = mutableListOf<Int>()
+        Log.i(TAG, "mList size:" + mList.size)
+        mList.add(1)
+        mList.add(2)
+        Log.i(TAG, "mList size:" + mList.size)
+
+打印结果为
+>com.kotlin.collection.example I/MainActivity: mList size:0
+com.kotlin.collection.example I/MainActivity: mList size:2
+
+这样就可以给需要初始值为空的列表进行赋值了，比如ListView的Adapter初始值为空的情况。
+此外还有两个声明List集合的方法
+* emptyList()——创建一个空集合
+* listOfNotNull ()——  创建的集合中不能插入null值
+
+####Set
+创建一个不可变的Set
+>val mList = setOf<Int>(1,2,3)
+
+创建一个可变的Set
+>val mList = mutableSetOf<Int>(1,2,3)
+
+此外还有如下方法
+* emptySet() ——创建一个空的set集合
+* linkedSetOf()——  创建set链表集合
+
+####Map
+创建一个不可变的Map
+>val mList = mapOf(Pair("key1", 1), Pair("key2", 2))
+
+或者
+>val mList = mapOf("key1" to 1, "key2" to 2)
+
+创建一个可变的Map
+> val mList = mutableMapOf("key1" to 1, "key2" to 2)
+
+推荐使用to的方式创建
+此外还有
+* emptyMap()——创建一个空map
+* hashMapOf()——创建一个hashMap
+* linkedMapOf()——创建一个linkedMap
+* sortedMapOf()——创建一个sortedMap
+
+以上就是三种集合常见的创建方式，下面再来说说集合中的操作符，使用合适的操作符可以极大的减小你的代码量
+
+###操作符
+####总数操作
+#####any
+说明：如果至少有一个元素符合判断条件，则返回true，否则false,例：
+>val list = listOf(1, 2, 3, 4, 5)
+  list.any { it > 10 }
+
+结果为false
+#####all
+说明：如果集合中所有的元素都符合判断条件，则返回true否则false,例：
+>val list = listOf(1, 2, 3, 4, 5)
+  list.any { it < 10 }
+
+结果为true
+
+#####count
+说明：返回集合中符合判断条件的元素总数。例：
+>list.count { it <3 }
+
+结果为2
+
+#####fold
+说明：在一个初始值的基础上从第一项到最后一项通过一个函数累计所有的元素。例：
+>list.fold(0) { total, next -> total + next }
+
+结果为15   (计算方式：0+1+2+3+4+5，第一个数0 为fold中的0，也就是初始值)
+
+#####foldRight
+说明：与fold一样，但是顺序是从最后一项到第一项。例：
+>list.foldRight(0) { total, next -> total + next }
+
+结果也为15
+
+#####reduce
+说明：与fold一样，但是没有一个初始值。通过一个函数从第一项到最后一项进行累计。例：
+>list.reduce{ total, next -> total + next}
+
+结果为15
+
+#####reduceRight
+说明：与foldRight一样，只不过没有初始值。例：
+>list.reduceRight { total, next -> total + next }
+
+结果也为15
+
+#####forEach
+说明：遍历所有元素，并执行给定的操作（类似于Java 中的for循环）。例：
+>list.forEach{ Log.i(TAG,it.toString()) }
+
+结果为：1 2 3 4 5
+
+#####forEachIndexed
+说明：与forEach作用一样，但是同时可以得到元素的index。例：
+>list.forEachIndexed { index, i -> Log.i(TAG, "index:" + index + " value:" + i.toString()) }
+
+结果为
+index:0 value:1
+index:1 value:2
+index:2 value:3
+index:3 value:4
+index:4 value:5
+
+#####max
+说明：返回集合中最大的一项，如果没有则返回null。例：
+>Log.i(TAG, list.max().toString())
+
+结果为:5
+
+#####min
+说明：返回集合中最小的一项，如果没有则返回null。例：
+>Log.i(TAG, list.min().toString())
+
+结果为:1
+
+#####maxBy
+说明：根据给定的函数返回最大的一项，如果没有则返回null。例：
+>Log.i(TAG, list.maxBy { it-10 }.toString())
+
+结果为 ：5 （因为从1到5这5个元素中只有5减去10后的值最大，所以返回元素5，注意返回的不是计算结果）
+
+#####minBy
+说明：返回最小的一项，如果没有则返回null。例：
+>Log.i(TAG, list.minBy { it-10 }.toString())
+
+结果为：1
+
+#####sumBy
+说明：返回所有每一项通过函数转换之后的数据的总和。例：
+> list.sumBy { it + 2 }
+
+结果为：25 （每个元素都加2，最后求和）
+
+
+####过滤操作
+#####drop
+说明：返回去掉前n个元素的列表。例：
+>val list = listOf(1, 2, 3, 4, 5)
+        var s = list.drop(2)
+        s.forEach {
+            Log.i(TAG, it.toString())
+        }
+
+结果为 ：3 4 5（去掉了前两个元素）
+
+#####dropWhile
+说明：返回根据给定函数从第一项开始去掉指定元素的列表。例：
+>list.dropWhile { it < 3 }
+
+结果为：3 4 5
+
+#####dropLastWhile
+说明：同dropWhile，但是是从最后一项开始。例：
+>list.dropLastWhile { it >3 }
+
+结果为:1 2 3
+
+#####filter
+说明：过滤所有符合给定函数条件的元素。例：
+>list.filter { it > 2 }
+
+结果为：3 4 5
+
+#####filterNot
+说明：过滤所有不符合给定函数条件的元素。例：
+>list.filterNot{ it > 2 }
+
+结果为：1 2
+
+#####filterNotNull
+说明：过滤所有元素中不是null的元素。例：
+>list.filterNotNull()
+
+结果为：1 2 3 4 5
+
+#####slice
+说明：过滤集合中指定index的元素（其实就是获取指定index的元素)。例：
+>list.slice(listOf(0,1,2))
+
+结果为：1 2 3
+
+#####take
+说明：返回从第一个开始的n个元素。例：
+> list.take(2)
+
+结果为：1 2
+
+#####takeLast
+说明：返回从最后一个开始的n个元素。例：
+> list.takeLast(2)
+
+结果为：4 5
+
+#####takeWhile
+说明：返回从第一个开始符合给定函数条件的元素。例：
+>list.takeWhile { it<3 }
+
+结果为：1 2
+
+####映射操作
+
+#####flatMap
+说明：遍历所有的元素，为每一个创建一个集合，最后把所有的集合放在一个集合中。例：
+>list.flatMap { listOf(it, it + 1) } 
+
+结果为： 1 2 2 3 3 4 4 5 5 6（每个元素都执行加1后作为一个新元素）
+
+#####groupBy
+说明：返回一个根据给定函数分组后的map。例：
+>list.groupBy { if (it >3) "big" else "small" }
+
+结果为：
+small=[1, 2, 3]
+big=[4, 5]
+
+#####map
+说明：返回一个每一个元素根据给定的函数转换所组成的集合。例：
+>list.map { it * 2 }
+
+结果为：2 4 6 8 10
+
+#####mapIndexed
+说明：返回一个每一个元素根据给定的包含元素index的函数转换所组成的集合。例：
+>list.mapIndexed { index, it -> index + it }
+
+结果为：1 3 5 7 9
+
+#####mapNotNull
+说明：返回一个每一个非null元素根据给定的函数转换所组成的集合。例：
+>list.mapNotNull  { it * 2 }
+
+结果为：2 4 6 8 10
+
+####顺序操作
+
+#####reversed
+说明：返回一个与指定集合相反顺序的集合。例：
+>list.reversed()
+
+结果为：5 4 3 2 1
+
+#####sorted
+说明：返回一个自然排序后的集合。例：
+>  val list = listOf(1, 2, 6, 4, 5)
+    var s = list.sorted()
+
+结果为 1 2 4 5 6
+
+#####sortedBy
+说明：返回一个根据指定函数排序后的集合。例：
+>    val list = listOf(1, 2, 6, 4, 5)
+      var s = list.sortedBy { it - 2 }
+
+结果为 1 2 4 5 6
+
+#####sortedDescending
+说明：返回一个降序排序后的集合。例：
+>list.sortedDescending()
+
+结果为：5 4 3 2 1
+
+#####sortedByDescending
+说明：返回一个根据指定函数降序排序后的集合。例：
+>list.sortedByDescending { it % 2 }
+
+结果为： 1 3 5 2 4
+
+####生产操作
+#####partition
+说明：把一个给定的集合分割成两个，第一个集合是由原集合每一项元素匹配给定函数条件返回true的元素组成，第二个集合是由原集合每一项元素匹配给定函数条件返回false的元素组成。例：
+
+    val list = listOf(1, 2, 3, 4, 5)
+    var s = list.partition { it > 2 }
+    s.first.forEach {
+        Log.i(TAG, it.toString())
+    }
+    s.second.forEach {
+        Log.i(TAG, it.toString())
+    }
+
+结果为：
+3 4 5
+1 2 
+
+#####plus
+说明：返回一个包含原集合和给定集合中所有元素的集合，因为函数的名字原因，我们可以使用+操作符。例：
+> list + listOf(6, 7)
+
+结果为： 1 2 3 4 5 6 7
+
+#####zip
+说明：返回由pair组成的List，每个pair由两个集合中相同index的元素组成。这个返回的List的大小由最小的那个集合决定。例：
+>list.zip(listOf(7, 8))
+
+结果为：(1, 7) (2, 8)
+
+#####unzip
+说明：从包含pair的List中生成包含List的Pair。例：
+
+    var s = listOf(Pair(1, 2), Pair(3, 4)).unzip()
+    s.first.forEach {
+        Log.i(TAG, it.toString())
+    }
+    s.second.forEach {
+        Log.i(TAG, it.toString())
+    }
+
+结果为：1 2 3 4
+
+####元素操作
+
+#####contains
+说明：指定元素可以在集合中找到，则返回true，否则false。例：
+>list.contains(1)
+
+结果为：true
+
+#####elementAt
+说明：返回给定index对应的元素，如果index数组越界则会抛出IndexOutOfBoundsException。例：
+>list.elementAt(1)
+
+结果为：2
+
+#####elementAtOrElse
+说明：返回给定index对应的元素，如果index数组越界则会根据给定函数返回默认值。例：
+>list.elementAtOrElse(5, { it + 2 })
+
+结果为：7
+
+#####elementAtOrNull
+说明：返回给定index对应的元素，如果index数组越界则会返回null。例：
+>list.elementAtOrNull(5)
+
+结果为：null
+
+#####first
+说明：返回符合给定函数条件的第一个元素。例：
+> list.first { it > 2 }
+
+结果为：3
+
+#####firstOrNull
+说明：返回符合给定函数条件的第一个元素，如果没有符合则返回null。例：
+> list.first { it > 8 }
+
+结果为：null
+
+#####indexOf
+说明：返回指定元素的第一个index，如果不存在，则返回-1。例：
+>list.indexOf(2)
+
+结果为：1
+
+#####indexOfFirst
+说明：返回第一个符合给定函数条件的元素的index，如果没有符合则返回-1。例：
+>list.indexOfFirst { it % 2 == 0 }
+
+结果为：1
+
+#####indexOfLast
+说明：返回最后一个符合给定函数条件的元素的index，如果没有符合则返回-1。例：
+>list.indexOfLast { it % 2 == 0 }
+
+结果为：3
+
+#####last
+说明：返回符合给定函数条件的最后一个元素。例：
+>list.last { it % 2 == 0 }
+
+结果为：4
+
+#####lastIndexOf
+说明：返回指定元素的最后一个index，如果不存在，则返回-1。例：
+>list.lastIndexOf(4)
+
+结果为：3
+
+#####lastOrNull
+说明：返回符合给定函数条件的最后一个元素，如果没有符合则返回null。例：
+> list.lastOrNull { it > 6 }
+
+结果为：null
+
+#####single
+说明：返回符合给定函数的单个元素，如果没有符合或者超过一个，则抛出异常。例：
+>list.single { it > 4 }
+
+结果为：5
+
+#####singleOrNull
+说明：返回符合给定函数的单个元素，如果没有符合或者超过一个，则返回null。例：
+>list.singleOrNull { it > 5}
+
+结果为：null
+
+
+
