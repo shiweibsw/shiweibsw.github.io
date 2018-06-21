@@ -5,8 +5,8 @@ header-img: img/bg_home.jpg
 email: shiweibsw@gmail.com
 description: "程序猿一枚 | 小白，Android，Software Engineer。"
 keyword: "小白, Knight_Davion, Bsw"
-url: "https://shiweibsw.github.io"              # your host, for absolute URL
-baseurl: ""                             # for example, '/blog' if your blog hosted on 'host/blog'
+url: "https://shiweibsw.github.io" 
+baseurl: "" 
 
 # Publish posts or collection documents with a future date.
 future: true
@@ -74,7 +74,7 @@ sidebar-avatar: /img/avatar.jpg      # use absolute URL, seeing it's used in bot
 
 
 # Featured Tags
-featured-tags: true                     # whether or not using Feature-Tags
+featured-tags: false                     # whether or not using Feature-Tags
 featured-condition-size: 1              # A tag will be featured if the size of it is more than this condition value
 
 
