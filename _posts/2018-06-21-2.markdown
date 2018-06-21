@@ -1,0 +1,70 @@
+---
+layout:     post
+title:      "Kotlin-优雅的完成登录判断及自动跳转功能"
+subtitle:   "kotlin 学习笔记"
+date:       2018-06-21 15:07:00
+author:     "Knight_Davion"
+header-img: "img/2018-06/2.jpg"
+catalog: true
+tags:
+    - kotlin
+
+在项目开发过程中，如果有用户系统少不了登录状态的判断，通常的一种实现方式是在baseActivity中获取登陆状态，当需要时进行if else判断，这样每次需要时就进行判断一次非常的麻烦，现在我们可以用kotlin的扩展函数功能实现统一的登录判断及登录后的自动跳转。
+首先说一下什么是扩展函数，简单来说，扩展函数就是让一个已存在的类实现一些我们自定义的功能，如果我们对一个父类实现了扩展函数，那么它的子类也会具有扩展功能，首先举个例子：
+
+    fun View.slideExit() {
+        if (translationY == 0f) animate().setInterpolator(AccelerateInterpolator()).setDuration(default_duration_short).translationY(height.toFloat())
+    }
+    
+我们在这里给View增加了一个滑动退出功能，那么所有集成View的类都具有了这个功能，比如TextView，我们可以直接调用
+
+    var tx=TextView(this)
+    tx.slideExit()
+   
+下面来说所如何完成统一的登录状态判断以及登录后的自动跳转，通常我们的界面容器都是activit或者fragment，所以我们就给这两个类增加一个扩展函数功能，由于代码是一样的
+这里就那Activity举例，代码如下
+
+    inline fun <reified T : Activity> Activity.checkLoginToStart(vararg params: Pair<String, Any>) {
+        var isLogin = AccountTool.isLogined(this)
+        if (isLogin) {
+            AnkoInternals.internalStartActivity(this, T::class.java, params)
+        } else {
+            var i = AnkoInternals.createIntent(this, T::class.java, params)
+            i.putExtra(LoginActivity.TARGET, "${T::class.java.`package`}.${T::class.java.simpleName}")
+            i.setClass(this, LoginActivity::class.java)
+            startActivity(i)
+        }
+    }
+
+注意扩展函数的写法 是Activity.checkLoginToStart，如果是Fragment就是Fragment.checkLoginToStart
+在这个函数需要一个Pair<String,Any>类型参数，用于传递参数，这是一个可选的，在函数内部先获取了一下登陆状态，如果是已登录直接启动目标Activity，如果是未登录那么我们先通过AnkoInternals.createIntent把参数封装起来，但是此时指定的activity是目标Activity即T::class.java，而我们想要到达的是LoginActivity，所以通过setClass重新指定Activity，同时我们把目标activity的绝对路径也传递给LoginActivity，用于登录后的自动跳转。这样我们就成功跳转到了LoginActivity，并且携带了目标activity的启动参数。
+在LoginActivity中假如我们正确输入了用户名和密码，成功登陆了，那么在成功后的接口中我们进行这样的处理
+
+    onsuccess{
+      var i = intent
+      var target = i.getStringExtra(TARGET)
+      if (target.isNullOrEmpty()) {
+          finish()
+      } else {
+          var reTarget = if (target.contains("package")) target.replace("package", "").trim() else target.trim()
+          i.setClassName(this@LoginActivity, reTarget)
+          i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+          i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+          startActivity(i)
+          finish()
+      }
+    }
+
+
+比如onSuccess方法是我们登录成功后的回调方法，首先我们获取目标Activity的绝对路径，这里进行了一次判断，如果我们是直接启动的登录界面是没有目标Activity的，所以直接finish，如果有那么通过setClassName设置启动的目标activity后直接通过这个intent启动，注意此时这个intent中还携带了我们目标activity中需要的参数，这样登录成功后就成功跳转到了目标activity，参数也正常的传递了。到此整个流程分析完毕。
+
+
+最后当我们在activit中使用时，直接在Activit中调用
+
+     checkLoginToStart<UserCenterActivity>()
+
+如果你需要给Activity传递参数 则
+
+    checkLoginToStart<UserCenterActivity>(KEY to VALUE)
+
+这样一来少了一层逻辑判断，代码可读性也更高。
