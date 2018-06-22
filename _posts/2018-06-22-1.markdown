@@ -1,0 +1,126 @@
+---
+layout:     post
+title:      "如何清除kotlin代码中的！！操作符"
+subtitle:   "kotlin 学习笔记"
+date:       2018-06-22 15:37:00
+author:     "Knight_Davion"
+header-img: "img/2018-06/3.jpg"
+catalog: true
+tags:
+    - kotlin
+---
+
+&emsp;&emsp;空安全是Kotlin中非常实用的特性，它能够让你避免许多隐藏的NullPointerExceptions问题。然而当你使用AS将Java代码转换成Kotlin代码后会出现很多的!! 操作符，因为出现!!意味着这里可能有未捕获的KotlinNullPointerException异常。
+
+&emsp;&emsp;对于一个有强迫症的程序猿来说一个类中大篇幅的出现!! 绝对会使他们发疯的。幸运的是我们可以通过以下方式避免使用!!操作符。
+
+#### 1. 使用val代替var
+我们都知道val修饰的变量是只读的，var修饰的变量是可变的，所以我们应该尽可能多的使用val，因为使用val修饰的变量必须有一个value，这样你就不用再担心空指针的问题，所以如果你能确定一个变量可以定义成一个常量，那么请用val修饰它。
+
+#### 2. 使用lateinit
+然而你并不能把所有的变量用val修饰，，比如那些需要在Activity的onCreate()中进行初始换的变量，针对这个情况你可以考虑使用lateinit修饰变量，例如下面的代码
+
+    private var mAdapter: RecyclerAdapter<Transaction>? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+       super.onCreate(savedInstanceState)
+       mAdapter = RecyclerAdapter(R.layout.item_transaction)
+    }
+    fun updateTransactions() {
+       mAdapter!!.notifyDataSetChanged()
+    }
+把mAdapter使用lateinit修饰后代码变成这样
+
+    private lateinit var mAdapter: RecyclerAdapter<Transaction>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+       super.onCreate(savedInstanceState)
+       mAdapter = RecyclerAdapter(R.layout.item_transaction)
+    }
+
+    fun updateTransactions() {
+       mAdapter.notifyDataSetChanged()
+    }
+**需要注意的是如果访问一个还没有初始化的变量或属性将会导致UninitializedPropertyAccessException异常。**
+
+**还有一点需要注意的是lateinit并不能修饰基本数据类型的变量或属性，比如Int,Boolean等等，它会提示你**
+
+    ‘lateinit’modifier is nor allowed on properites of primitive types
+
+此时你可以使用下面这个方式
+
+    private var mNumber: Int by Delegates.notNull<Int>()
+
+#### 3. 使用let函数
+
+下面这段代码的提示我们经常会见到
+
+![](https://user-gold-cdn.xitu.io/2018/6/22/1642619d691cfd15?w=660&h=130&f=png&s=10846)
+
+studio提醒我们mPhotoUrl的value在执行uploadPhoto时可能已经改变，不能确定是否非空，通常我们的解决方式是这样的
+
+    private var mPhotoUrl: String? = null
+
+    fun uploadClicked() {
+        if (mPhotoUrl != null) {
+        uploadPhoto(mPhotoUrl!!)
+        }
+    }
+然而如果你不想使用!! 这里还有一种更优雅的方式
+
+    private var mPhotoUrl: String? = null
+
+    fun uploadClicked() {
+        mPhotoUrl?.let { uploadPhoto(it) }
+    }
+    
+只有当mPhotoUrl不为空时let中的代码才会执行
+
+如果你对let函数还不了解，可以看我写的这篇文章
+
+[https://juejin.im/post/59cb550b5188256abd12f0b7](https://juejin.im/post/59cb550b5188256abd12f0b7)
+    
+#### 4. 使用特定的函数处理复杂的场景
+对于一些简单的场景let函数是很好用的，就像上面的情况，但是对于一些复杂的场景，比如下面的代码
+
+    if (mUserName != null && mPhotoUrl != null) {
+       uploadPhoto(mUserName!!, mPhotoUrl!!)
+    }
+
+当然你也可以使用let的方式处理，但是这样代码的可读性就会降低了，这时候你可以定义一些特定的函数来解决这个问题。
+比如下面这个可以判断两个参数非空的函数
+
+    fun <T1, T2> ifNotNull(value1: T1?, value2: T2?, bothNotNull: (T1, T2) -> (Unit)) {
+       if (value1 != null && value2 != null) {
+           bothNotNull(value1, value2)
+       }
+    }
+
+这样你的代码就变成了下面这样
+ 
+    ifNotNull(mUserName, mPhotoUrl) {
+       userName, photoUrl ->
+       uploadPhoto(userName, photoUrl)
+    }
+
+See,!!操作符消失了。
+
+#### 5. 使用Elvis操作符
+对于那些必有返回的情况，Elvis非常的实用。
+
+Elvis操作符,?:左边的返回值不为空则返回，否则返回？：右边的值
+
+    fun getUserName(): String {
+       if (mUserName != null) {
+           return mUserName!!
+       } else {
+           return "Anonymous"
+       }
+    }
+使用Elvis操作符后
+
+    fun getUserName(): String {
+       return mUserName ?: "Anonymous"
+    }
+    
+通过上面这几种办法基本上你可以清除程序中所有的!!操作符了，而且你的代码也会变得更加健壮。如果你还有其他的方式请在评论区留言吧。
